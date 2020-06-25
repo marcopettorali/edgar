@@ -20,7 +20,7 @@ note_threshold = ""
 keynote = ""
 octaves = ""
 scale = ""
-velocity_hardness = ""
+velocity_min_limit = ""
 attack_softness = ""
 background_bw_img = ''
 background_taken = False
@@ -123,14 +123,14 @@ def build_scale(window):
     counter += 1
 
 
-def build_velocity_hardness(window):
-    global velocity_hardness, counter
-    lbl = Label(window, text="Set velocity hardness")
+def build_velocity_min_limit(window):
+    global velocity_min_limit, counter
+    lbl = Label(window, text="Set velocity minimum limit")
     lbl.grid(column=0, row=counter)
-    velocity_hardness = StringVar(window)
-    velocity_hardness.set("3")
-    velocity_hardness_entry = Entry(window, textvariable=velocity_hardness)
-    velocity_hardness_entry.grid(column=1, row=counter)
+    velocity_min_limit = StringVar(window)
+    velocity_min_limit.set("30")
+    velocity_min_limit_entry = Entry(window, textvariable=velocity_min_limit)
+    velocity_min_limit_entry.grid(column=1, row=counter)
     counter += 1
 
 
@@ -166,7 +166,7 @@ def start(window):
     edgar_tracker.run(background_bw_img, int(camera.get()), int(bw_threshold.get()), int(dot_radius.get()),
                       port_name.get(),
                       int(note_threshold.get()), keynote.get(), int(octaves.get()), scale.get(),
-                      int(velocity_hardness.get()), int(attack_softness.get()))
+                      int(attack_softness.get()), int(velocity_min_limit.get()))
 
 
 def build_start_button(window):
@@ -215,7 +215,7 @@ def main():
     build_separator(window)
 
     build_note_threshold(window)
-    build_velocity_hardness(window)
+    build_velocity_min_limit(window)
     build_attack_softness(window)
 
     build_separator(window)

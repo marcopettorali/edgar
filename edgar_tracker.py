@@ -126,7 +126,7 @@ def take_background_img(camera, bw_threshold):
 
 
 def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale,
-        velocity_hardness, attack_softness):
+        attack_softness, velocity_min_limit):
     # pick the webcam
     cam = cv2.VideoCapture(camera)
 
@@ -167,11 +167,13 @@ def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_thr
 
         # play the note
         if abs(prev_point_x - point_x) > note_threshold or abs(prev_point_y - point_y) > note_threshold:
-            note = NotePlayer(port, scale_array[round(point_x * len(scale_array) / original_bw_img.shape[1])],
-                              (round(
-                                  127 * (original_bw_img.shape[0] - point_y) / original_bw_img.shape[
-                                      0]) - 70) * velocity_hardness + 70,
-                              1, 127 - attack_softness * (abs(prev_point_x - point_x)))
+            midi_note = scale_array[round(point_x * len(scale_array) / original_bw_img.shape[1])]
+            velocity = round(127 * (original_bw_img.shape[0] - point_y) / original_bw_img.shape[0])
+            if velocity < velocity_min_limit:
+                velocity = velocity_min_limit
+            duration = 1
+            attack = 127 - attack_softness * (abs(prev_point_x - point_x))
+            note = NotePlayer(port, midi_note, velocity, duration, attack)
             note.start()
 
         # draw red dot
@@ -198,12 +200,12 @@ def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_thr
 @click.option('--octaves', '-o', default=8, help='set the number of octaves to be played')
 @click.option('--scale', '-s', default='superlocrian',
               help='set the scale (eg. \'TTSTTTS\' or \'major\' for a major scale')
-@click.option('--velocity_hardness', '-v', default=3,
-              help='set the velocity hardness. The higher the value, the more velocity you get')
 @click.option('--attack_softness', '-a', default=5,
               help='set the attack softness. The higher the value, the slowest the attack you get')
-def main(camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale, velocity_hardness,
-         attack_softness):
+@click.option('--velocity_min_limit', '-v', default=30,
+              help='set the lower bound for the velocity')
+def main(camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale,
+         attack_softness, velocity_min_limit):
     print("+---------------------------------------------+")
     print("+ EDGAR Tracker - movement tracker and player +")
     print("+---------------------------------------------+")
@@ -212,7 +214,7 @@ def main(camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, o
     background_bw_img = take_background_img(camera, bw_threshold)
     input("Press enter to start the tracking")
     run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale,
-        velocity_hardness, attack_softness)
+        attack_softness, velocity_min_limit)
 
 
 if __name__ == "__main__":
