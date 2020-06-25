@@ -9,7 +9,7 @@ import cv2  # for handling images
 import click  # for handling CLI parameters
 import time  # for handling note duration
 import mido  # for handling MIDI connections
-from threading import Thread
+from threading import *
 
 
 def scale_builder(keynote_name, octaves, scale):
@@ -42,7 +42,7 @@ def scale_builder(keynote_name, octaves, scale):
             keynote -= 1
 
     # center keynote
-    keynote -= 12*round(octaves/2)
+    keynote -= 12 * round(octaves / 2)
 
     # scale mapping
     if scale == 'major':
@@ -70,17 +70,42 @@ def scale_builder(keynote_name, octaves, scale):
 
 
 class NotePlayer(Thread):
-    def __init__(self, port, note, velocity, duration):
+    def __init__(self, port, note, velocity, duration, attack_time):
         Thread.__init__(self)
         self.port = port
+
         self.note = note
+        if note > 127:
+            self.note = 127
+        if note < 0:
+            self.note = 0
+
         self.velocity = velocity
+        if velocity > 127:
+            self.velocity = 127
+        if velocity < 0:
+            self.velocity = 0
+
         self.duration = duration
 
+        self.attack_time = attack_time
+        if attack_time > 127:
+            self.attack_time = 127
+        if attack_time < 0:
+            self.attack_time = 0
+
     def run(self):
+        msg = mido.Message('control_change', channel=0, control=73, value=self.attack_time)
+
+        self.port.send(msg)
+
         msg = mido.Message('note_on', note=self.note, velocity=self.velocity)
         self.port.send(msg)
+
+        print("note = " + str(self.note) + ", velocity = " + str(self.velocity) + ", attack = " + str(self.attack_time))
+
         time.sleep(self.duration)
+
         msg = mido.Message('note_off', note=self.note)
         self.port.send(msg)
 
@@ -100,7 +125,8 @@ def take_background_img(camera, bw_threshold):
     return background_bw_img
 
 
-def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale):
+def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale,
+        velocity_hardness, attack_softness):
     # pick the webcam
     cam = cv2.VideoCapture(camera)
 
@@ -141,7 +167,11 @@ def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_thr
 
         # play the note
         if abs(prev_point_x - point_x) > note_threshold or abs(prev_point_y - point_y) > note_threshold:
-            note = NotePlayer(port, scale_array[round(point_x * len(scale_array) / original_bw_img.shape[1])], 60, 1)
+            note = NotePlayer(port, scale_array[round(point_x * len(scale_array) / original_bw_img.shape[1])],
+                              (round(
+                                  127 * (original_bw_img.shape[0] - point_y) / original_bw_img.shape[
+                                      0]) - 70) * velocity_hardness + 70,
+                              1, 127 - attack_softness * (abs(prev_point_x - point_x)))
             note.start()
 
         # draw red dot
@@ -163,12 +193,17 @@ def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_thr
 @click.option('--bw_threshold', '-b', default=127, help='set the threshold used to recognize moving pixels')
 @click.option('--dot_radius', '-d', default=5, help='set the dimension of the dot showing the movement tracker')
 @click.option('--port_name', '-p', default='in-port 1', help='choose the name of the virtual port that you want to use')
-@click.option('--note_threshold', '-n', default=10, help='set the movement threshold used to trigger notes')
+@click.option('--note_threshold', '-n', default=7, help='set the movement threshold used to trigger notes')
 @click.option('--keynote', '-k', default="C4", help='set the key note of the scale')
-@click.option('--octaves', '-o', default=3, help='set the number of octaves to be played')
+@click.option('--octaves', '-o', default=8, help='set the number of octaves to be played')
 @click.option('--scale', '-s', default='superlocrian',
               help='set the scale (eg. \'TTSTTTS\' or \'major\' for a major scale')
-def main(camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale):
+@click.option('--velocity_hardness', '-v', default=3,
+              help='set the velocity hardness. The higher the value, the more velocity you get')
+@click.option('--attack_softness', '-a', default=5,
+              help='set the attack softness. The higher the value, the slowest the attack you get')
+def main(camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale, velocity_hardness,
+         attack_softness):
     print("+---------------------------------------------+")
     print("+ EDGAR Tracker - movement tracker and player +")
     print("+---------------------------------------------+")
@@ -176,7 +211,8 @@ def main(camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, o
     input("Press enter to choose the background")
     background_bw_img = take_background_img(camera, bw_threshold)
     input("Press enter to start the tracking")
-    run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale)
+    run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale,
+        velocity_hardness, attack_softness)
 
 
 if __name__ == "__main__":

@@ -20,6 +20,8 @@ note_threshold = ""
 keynote = ""
 octaves = ""
 scale = ""
+velocity_hardness = ""
+attack_softness = ""
 background_bw_img = ''
 background_taken = False
 
@@ -82,7 +84,7 @@ def build_note_threshold(window):
     lbl = Label(window, text="Set note trigger threshold")
     lbl.grid(column=0, row=counter)
     note_threshold = StringVar(window)
-    note_threshold.set("10")
+    note_threshold.set("8")
     note_threshold_entry = Entry(window, textvariable=note_threshold)
     note_threshold_entry.grid(column=1, row=counter)
     counter += 1
@@ -104,7 +106,7 @@ def build_octaves(window):
     lbl = Label(window, text="Set max number of octaves")
     lbl.grid(column=0, row=counter)
     octaves = StringVar(window)
-    octaves.set("3")
+    octaves.set("8")
     octaves_entry = Entry(window, textvariable=octaves)
     octaves_entry.grid(column=1, row=counter)
     counter += 1
@@ -118,6 +120,28 @@ def build_scale(window):
     scale.set("major")
     scale_entry = Entry(window, textvariable=scale)
     scale_entry.grid(column=1, row=counter)
+    counter += 1
+
+
+def build_velocity_hardness(window):
+    global velocity_hardness, counter
+    lbl = Label(window, text="Set velocity hardness")
+    lbl.grid(column=0, row=counter)
+    velocity_hardness = StringVar(window)
+    velocity_hardness.set("3")
+    velocity_hardness_entry = Entry(window, textvariable=velocity_hardness)
+    velocity_hardness_entry.grid(column=1, row=counter)
+    counter += 1
+
+
+def build_attack_softness(window):
+    global attack_softness, counter
+    lbl = Label(window, text="Set attack softness")
+    lbl.grid(column=0, row=counter)
+    attack_softness = StringVar(window)
+    attack_softness.set("5")
+    attack_softness_entry = Entry(window, textvariable=attack_softness)
+    attack_softness_entry.grid(column=1, row=counter)
     counter += 1
 
 
@@ -141,7 +165,8 @@ def start(window):
 
     edgar_tracker.run(background_bw_img, int(camera.get()), int(bw_threshold.get()), int(dot_radius.get()),
                       port_name.get(),
-                      int(note_threshold.get()), keynote.get(), int(octaves.get()), scale.get())
+                      int(note_threshold.get()), keynote.get(), int(octaves.get()), scale.get(),
+                      int(velocity_hardness.get()), int(attack_softness.get()))
 
 
 def build_start_button(window):
@@ -153,6 +178,9 @@ def build_start_button(window):
 
 def take_background():
     global background_bw_img, background_taken
+    if port_name.get() == '' or camera.get() == '' or bw_threshold.get() == '' or dot_radius.get() == '' or note_threshold.get() == '' or keynote.get() == '' or octaves.get() == '' or scale.get() == '':
+        log.set("Error: one or more fields are empty")
+        return
     background_bw_img = edgar_tracker.take_background_img(int(camera.get()), int(bw_threshold.get()))
     background_taken = True
 
@@ -181,12 +209,17 @@ def main():
     build_separator(window)
 
     build_keynote(window)
-    build_octaves(window)
     build_scale(window)
+    build_octaves(window)
 
     build_separator(window)
 
     build_note_threshold(window)
+    build_velocity_hardness(window)
+    build_attack_softness(window)
+
+    build_separator(window)
+
     build_bw_threshold(window)
     build_dot_radius(window)
 
