@@ -20,8 +20,6 @@ note_threshold = ""
 keynote = ""
 octaves = ""
 scale = ""
-velocity_min_limit = ""
-attack_softness = ""
 background_bw_img = ''
 background_taken = False
 
@@ -84,7 +82,7 @@ def build_note_threshold(window):
     lbl = Label(window, text="Set note trigger threshold")
     lbl.grid(column=0, row=counter)
     note_threshold = StringVar(window)
-    note_threshold.set("8")
+    note_threshold.set("2")
     note_threshold_entry = Entry(window, textvariable=note_threshold)
     note_threshold_entry.grid(column=1, row=counter)
     counter += 1
@@ -106,7 +104,7 @@ def build_octaves(window):
     lbl = Label(window, text="Set max number of octaves")
     lbl.grid(column=0, row=counter)
     octaves = StringVar(window)
-    octaves.set("8")
+    octaves.set("12")
     octaves_entry = Entry(window, textvariable=octaves)
     octaves_entry.grid(column=1, row=counter)
     counter += 1
@@ -121,29 +119,6 @@ def build_scale(window):
     scale_entry = Entry(window, textvariable=scale)
     scale_entry.grid(column=1, row=counter)
     counter += 1
-
-
-def build_velocity_min_limit(window):
-    global velocity_min_limit, counter
-    lbl = Label(window, text="Set velocity minimum limit")
-    lbl.grid(column=0, row=counter)
-    velocity_min_limit = StringVar(window)
-    velocity_min_limit.set("30")
-    velocity_min_limit_entry = Entry(window, textvariable=velocity_min_limit)
-    velocity_min_limit_entry.grid(column=1, row=counter)
-    counter += 1
-
-
-def build_attack_softness(window):
-    global attack_softness, counter
-    lbl = Label(window, text="Set attack softness")
-    lbl.grid(column=0, row=counter)
-    attack_softness = StringVar(window)
-    attack_softness.set("5")
-    attack_softness_entry = Entry(window, textvariable=attack_softness)
-    attack_softness_entry.grid(column=1, row=counter)
-    counter += 1
-
 
 def build_log(window):
     global log, counter
@@ -165,8 +140,7 @@ def start(window):
 
     edgar_tracker.run(background_bw_img, int(camera.get()), int(bw_threshold.get()), int(dot_radius.get()),
                       port_name.get(),
-                      int(note_threshold.get()), keynote.get(), int(octaves.get()), scale.get(),
-                      int(attack_softness.get()), int(velocity_min_limit.get()))
+                      int(note_threshold.get()), keynote.get(), int(octaves.get()), scale.get())
 
 
 def build_start_button(window):
@@ -215,8 +189,6 @@ def main():
     build_separator(window)
 
     build_note_threshold(window)
-    build_velocity_min_limit(window)
-    build_attack_softness(window)
 
     build_separator(window)
 

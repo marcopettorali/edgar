@@ -125,8 +125,7 @@ def take_background_img(camera, bw_threshold):
     return background_bw_img
 
 
-def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale,
-        attack_softness, velocity_min_limit):
+def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale):
     # pick the webcam
     cam = cv2.VideoCapture(camera)
 
@@ -165,16 +164,23 @@ def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_thr
             point_x = round(point_x / points)
             point_y = round(point_y / points)
 
-        # play the note
-        if abs(prev_point_x - point_x) > note_threshold or abs(prev_point_y - point_y) > note_threshold:
-            midi_note = scale_array[round(point_x * len(scale_array) / original_bw_img.shape[1])]
-            velocity = round(127 * (original_bw_img.shape[0] - point_y) / original_bw_img.shape[0])
-            if velocity < velocity_min_limit:
-                velocity = velocity_min_limit
-            duration = 1
-            attack = 127 - attack_softness * (abs(prev_point_x - point_x))
-            note = NotePlayer(port, midi_note, velocity, duration, attack)
-            note.start()
+        # play the note on the x-axis
+        if abs(prev_point_x - point_x) > note_threshold:
+            midi_note_x = scale_array[round(point_x * len(scale_array) / original_bw_img.shape[1])]
+            velocity_x = 100
+            duration_x = 1
+            attack_x = 100
+            note_x = NotePlayer(port, midi_note_x, velocity_x, duration_x, attack_x)
+            note_x.start()
+
+        # play the note on the y-axis
+        if abs(prev_point_y - point_y) > note_threshold:
+            midi_note_y = scale_array[round(point_y * len(scale_array) / original_bw_img.shape[1])]
+            velocity_y = 100
+            duration_y = 1
+            attack_y = 100
+            note_y = NotePlayer(port, midi_note_y, velocity_y, duration_y, attack_y)
+            note_y.start()
 
         # draw red dot
         original_img[point_y - dot_radius:point_y + dot_radius, point_x - dot_radius:point_x + dot_radius] = [0, 0, 255]
@@ -195,15 +201,11 @@ def run(background_bw_img, camera, bw_threshold, dot_radius, port_name, note_thr
 @click.option('--bw_threshold', '-b', default=127, help='set the threshold used to recognize moving pixels')
 @click.option('--dot_radius', '-d', default=5, help='set the dimension of the dot showing the movement tracker')
 @click.option('--port_name', '-p', default='in-port 1', help='choose the name of the virtual port that you want to use')
-@click.option('--note_threshold', '-n', default=7, help='set the movement threshold used to trigger notes')
+@click.option('--note_threshold', '-n', default=2, help='set the movement threshold used to trigger notes')
 @click.option('--keynote', '-k', default="C4", help='set the key note of the scale')
-@click.option('--octaves', '-o', default=8, help='set the number of octaves to be played')
+@click.option('--octaves', '-o', default=12, help='set the number of octaves to be played')
 @click.option('--scale', '-s', default='superlocrian',
               help='set the scale (eg. \'TTSTTTS\' or \'major\' for a major scale')
-@click.option('--attack_softness', '-a', default=5,
-              help='set the attack softness. The higher the value, the slowest the attack you get')
-@click.option('--velocity_min_limit', '-v', default=30,
-              help='set the lower bound for the velocity')
 def main(camera, bw_threshold, dot_radius, port_name, note_threshold, keynote, octaves, scale,
          attack_softness, velocity_min_limit):
     print("+---------------------------------------------+")
